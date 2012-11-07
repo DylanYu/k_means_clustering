@@ -1,7 +1,7 @@
 import math
 import random
 
-MIN_NUMBER_OF_CLUSTER = 1
+MIN_NUMBER_OF_CLUSTER = 2
 
 def read_file(file_name):
     data = []
@@ -119,18 +119,18 @@ def cal_cluster_optimally(data, k, candidate_number):
 def generate_cluster_s(data, start_k, end_k, candidate_number):
     cluster_s = []
     for i in range(start_k, end_k + 1):
-        file_generated_cluster = open('result_k_' + str(i), 'w')
+        #file_generated_cluster = open('result_k_' + str(i), 'w')
+        file_generated_cluster = open('output_' + str(i), 'w')
         cluster = cal_cluster_optimally(data, i, candidate_number)
         cluster_s.append(cluster)
         for no in cluster:
-            file_generated_cluster.write(str(no) + ' ')
+            file_generated_cluster.write(str(no) + '\n')
         file_generated_cluster.write('\n')
         file_generated_cluster.flush()
         file_generated_cluster.close()
     return cluster_s
 
-def read_assess_data():
-    filename = "assess_data"
+def read_result_data(filename):
     file_data = open(filename)
     assess_data = []
     while True:
@@ -143,13 +143,12 @@ def read_assess_data():
         assess_data.append(numeric_number)
     return assess_data
 
-def assess(data):
-    assess_data = read_assess_data()
+def assess(data, result_data):
     all_E = []
     min_E = 100000
     min_i = -1;
-    for i in range(MIN_NUMBER_OF_CLUSTER, len(assess_data) + 1):
-        E = cal_E_auto(data, assess_data[i - 1], i)
+    for i in range(MIN_NUMBER_OF_CLUSTER, len(result_data) + 1):
+        E = cal_E_auto(data, result_data[i - MIN_NUMBER_OF_CLUSTER], i)
         if E < min_E:
             min_E = E
             min_i = i
@@ -167,32 +166,77 @@ def cal_clusters(data, max_k, every):
         cluster_results.append(result_k)
     return cluster_results
 
-def cal_cluster_inner_dist(k_means):
-    k = len(k_means)
-    count = 0
-    sum_dist = 0
-    for i in range(0, k):
-        for j in range(i + 1, k):
-            sum_dist += cal_dist(k_means[i], k_means[j])
-            count += 1
-    return sum_dist / count
+def cal_cluster_inner_dist(data, cluster_no, k):
+    means = cal_k_means(data, cluster_no, k)
+    dist_sum = 0
+    for i in range(0, len(data)):
+        mean = means[cluster_no[i]]
+        dist = cal_dist(data[i], mean)
+        dist_sum += dist
+    return dist_sum
 
-def cal_cluster_dist(data, cluster_results, max_k):
-    k_means_s = []
-    k = MIN_NUMBER_OF_CLUSTER;
-    for cluster_no_i in cluster_results:
-        tmp_k_means = [0 for x in range(0, len(data[0]))]
-        i = 0
-        for cluster_no in cluster_no_i:
-            means = cal_k_means(data, cluster_no, k)
-            tmp_k_means = [(x + y) for x, y in zip(tmp_k_means, means)]
-            i += 1
-        k_means_s.append(tmp_k_means)
-        k += 1
-    print k_means_s
+def cal_all_clusters_inner_dist(data, result_data):
+    distances = []
+    for i in range(0, len(result_data)):
+        k = i + MIN_NUMBER_OF_CLUSTER
+        dist_sum = cal_cluster_dist(data, result_data[i], k)
+        print 'dist_sum for k = ', k, ' is ', dist_sum
+        distances.append(dist_sum)
+    return distances
+
+def cal_cluster_outer_dist(data, cluster_no, k):
+    means = cal_k_means(data, cluster_no, k)
+    dist_sum = 0
+    for self in means:
+        for other in means:
+            dist_sum += cal_dist(self, other)
+    return dist_sum
+
+def cal_all_clusters_outer_dist(data, result_data):
+    distances = []
+    for i in range(0, len(result_data)):
+        k = i + MIN_NUMBER_OF_CLUSTER
+        dis_sum = cal_cluster_outer_dist(data, result_data[i], k)
+        print 'dist_sum for k = ', k, ' is ', dist_sum
+        distances.a
+
+def file_combination():
+    prefix = "result_k_"
+    result_data = []
+    result_file_name = "result_k_2-2022"
+    result_file = open(result_file_name, 'w')
+    for i in range(2, 21):
+        file_name = prefix + str(i)
+        f = open(file_name)
+        str_numbers = f.readline().split()
+        numeric_numbers = []
+        for num in str_numbers:
+            result_file.write(num + ' ')
+            numeric_numbers.append(int(num))
+            j += 1
+        result_file.write('\n')
+        result_data.append(numeric_numbers)
+    result_file.close()
+    return result_data
+
+def file_change(filename):
+    f = open(filename)
+    f_out = open('output.txt', 'w')
+    str_numbers = f.readline().split()
+    for num in str_numbers:
+        f_out.write(num + '\n')
+        
     
+file_change("result_k_15")
 
-data = read_file('clustering data')
-new_data = data_extraction(data, 8)
-generate_cluster_s(new_data, 2, 20, 20)
+#data = read_file('clustering data')
+#result_data = read_result_data('result_k_2-20')
+#assess(data, result_data)
+#cal_all_clusters_inner_dist(data, result_data)
+
+#new_data = data_extraction(data, 8)
+#generate_cluster_s(new_data, 9, 11, 20)
+
+#new_data = data_extraction(data, 8)
+#generate_cluster_s(new_data, 2, 20, 20)
 #assess(data)
