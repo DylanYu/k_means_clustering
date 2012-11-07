@@ -9,4 +9,4 @@ output.txt - result of k = 15
 
 report.doc - report 
 
-results folder - results from k = 2 to k = 20
+results folder - results from k = 2 to k = 20 and some other data
