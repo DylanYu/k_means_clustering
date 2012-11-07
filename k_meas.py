@@ -227,11 +227,10 @@ def file_change(filename):
         f_out.write(num + '\n')
         
     
-file_change("result_k_15")
 
-#data = read_file('clustering data')
-#result_data = read_result_data('result_k_2-20')
-#assess(data, result_data)
+data = read_file('clustering data')
+result_data = read_result_data('result_k_2-20')
+assess(data, result_data)
 #cal_all_clusters_inner_dist(data, result_data)
 
 #new_data = data_extraction(data, 8)
