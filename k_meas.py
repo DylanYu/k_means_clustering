@@ -13,10 +13,24 @@ def read_file(file_name):
         for num in str_number:
             numeric_number.append(int(num))
         data.append(numeric_number)
+    file_data.close()
     return data
+
+def data_extraction(data, combination):
+    new_instance_number = len(data[0]) / combination
+    new_data = [[0 for x in range(0, new_instance_number)] for y in range(0, len(data))]
+    for i in range(0, len(data)):
+        for j in range(0, new_instance_number):
+            for k in range(0, combination):
+                new_data[i][j] += data[i][j * combination + k]
+    """
+    ?????why can't print
+    """
+    return new_data
 
 def cal_dist(data1, data2):
     if len(data1) != len(data2):
+        print 'error len in cal_dist'
         return None
     tmp_sum = 0
     for i in range(0, len(data1)):
@@ -27,6 +41,11 @@ def cal_E(data, k_means, cluster_no):
     E = 0
     for i in range(0, len(data)):
         E += math.pow(cal_dist(data[i], k_means[cluster_no[i]]), 2)
+    return E
+
+def cal_E_auto(data, cluster_no, k):
+    means = cal_k_means(data, cluster_no, k)
+    E = cal_E(data, means, cluster_no)
     return E
 
 def cal_cluster_no(data, k_means):
@@ -44,17 +63,18 @@ def cal_cluster_no(data, k_means):
         no[i] = min_j
     return no
 
-def get_random_k_means(num_of_instances, k):
+def get_random_k_means(data, num_of_instances, k):
     k_means = []
     for i in range(0, k):
         random_num = random.randrange(0, num_of_instances)
         k_means.append(data[random_num])
-    return k_means    
+    return k_means
 
 def cal_k_means(data, cluster_no, k):
     k_means = [[0 for x in range(0, len(data[0]))] for y in range(0, k)]
     tmp_sum = [[0 for x in range(0, len(data[0]))] for y in range(0, k)]
-    count = [0 for x in range(0, k)]
+    #avoid count[i] == 0
+    count = [1 for x in range(0, k)]
     for i in range(0, len(data)):
         no = cluster_no[i]
         tmp_sum[no] = [(x + y) for x, y in zip(tmp_sum[no], data[i])]
@@ -69,7 +89,7 @@ def cluster(data, k):
     num_of_attr = len(data[0])
     E = random.random()
     next_E = random.random()
-    k_means = get_random_k_means(num_of_instances, k)
+    k_means = get_random_k_means(data, num_of_instances, k)
     i = 0
     while(math.fabs(E - next_E) > 1e-5):
     #while(E != next_E):
@@ -77,11 +97,66 @@ def cluster(data, k):
         cluster_no = cal_cluster_no(data, k_means)
         E = next_E
         next_E = cal_E(data, k_means, cluster_no)
-
-        print 'k = ', k, ', round = ' , i, ', E = ', E
-
         k_means = cal_k_means(data, cluster_no, k)
+    print 'k = ', k, ', round used= ' , i, ', E = ', E
     return cluster_no
+
+def cal_cluster_optimally(data, k, candidate_number):
+    cluster_s = []
+    for i in range(0, candidate_number):
+        cluster_s.append(cluster(data, k))
+    min_E = 10000000;
+    min_i = 0;
+    for i in range(0, candidate_number):
+        means = cal_k_means(data, cluster_s[i], k)
+        E = cal_E(data, means, cluster_s[i])
+        if E < min_E:
+            min_E = E
+            min_i = i
+    print "min: ", min_i, " ", min_E
+    return cluster_s[min_i]
+
+def generate_cluster_s(data, start_k, end_k, candidate_number):
+    cluster_s = []
+    for i in range(start_k, end_k + 1):
+        file_generated_cluster = open('result_k_' + str(i), 'w')
+        cluster = cal_cluster_optimally(data, i, candidate_number)
+        cluster_s.append(cluster)
+        for no in cluster:
+            file_generated_cluster.write(str(no) + ' ')
+        file_generated_cluster.write('\n')
+        file_generated_cluster.flush()
+        file_generated_cluster.close()
+    return cluster_s
+
+def read_assess_data():
+    filename = "assess_data"
+    file_data = open(filename)
+    assess_data = []
+    while True:
+        str_numbers = file_data.readline().split()
+        if not str_numbers: break
+        numeric_number = []
+        for num in str_numbers:
+            int_num = int(num)
+            numeric_number.append(int_num)
+        assess_data.append(numeric_number)
+    return assess_data
+
+def assess(data):
+    assess_data = read_assess_data()
+    all_E = []
+    min_E = 100000
+    min_i = -1;
+    for i in range(MIN_NUMBER_OF_CLUSTER, len(assess_data) + 1):
+        E = cal_E_auto(data, assess_data[i - 1], i)
+        if E < min_E:
+            min_E = E
+            min_i = i
+        all_E.append(E)
+        print "i = ", i, ", E = ", E
+    print "best k is: ", min_i
+    
 
 def cal_clusters(data, max_k, every):
     cluster_results = []
@@ -117,14 +192,7 @@ def cal_cluster_dist(data, cluster_results, max_k):
     print k_means_s
     
 
-
 data = read_file('clustering data')
-clusters =  cal_clusters(data, 3, 1)
-cal_cluster_dist(data, clusters, 3)
-"""
-cluster_no =  cluster(data, 10)
-cluster_result = []
-cluster_result.append(cluster_no)
-k_means = cal_k_means(data, cluster_no, 10)
-print cal_cluster_inner_dist(k_means)
-"""
+new_data = data_extraction(data, 8)
+generate_cluster_s(new_data, 2, 20, 20)
+#assess(data)
